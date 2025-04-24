@@ -1,0 +1,56 @@
+
+#define BLYNK_TEMPLATE_ID "TMPL3kZN-gvmO"
+#define BLYNK_TEMPLATE_NAME "flame sensor"
+#define BLYNK_AUTH_TOKEN "auth_token"
+
+#include <Blynk.h>
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+#define Buzzer  D5
+#define Flame   D0  
+
+char ssid[] = "wifiname";       
+char pass[] = "wifipass";  
+
+BlynkTimer timer;  
+
+void checkFlame() {
+  int flameState = digitalRead(Flame);
+
+  if (flameState == LOW) {  
+    Serial.println("Flame detected! Buzzing...");
+    tone(Buzzer, 1000);
+    
+    Blynk.logEvent("fire_alert"); 
+    Serial.println(" Blynk event triggered!");
+  } 
+  else {  // No flame
+    Serial.println("No flame.");
+    noTone(Buzzer);
+  }
+}
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(Buzzer, OUTPUT);
+  pinMode(Flame, INPUT);
+
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    ESP.restart();
+  }
+  Serial.println("\n WiFi Connected!");
+
+  Blynk.config(BLYNK_AUTH_TOKEN);
+  Blynk.connect();
+
+  timer.setInterval(10000L, checkFlame);  // Check every 10s
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();  // Handle timed functions
+}
